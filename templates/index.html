@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Agricultural Labour Cost Estimator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #f9f9f9;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            color: #2e7d32;
+        }
+        form {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+        }
+        div {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #555;
+        }
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        button:hover {
+            background: #388e3c;
+        }
+        .result {
+            margin-top: 30px;
+            padding: 25px;
+            background: #e8f5e9;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+        .result h2 {
+            margin-top: 0;
+            color: #2e7d32;
+        }
+        .result p {
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .error {
+            color: #d32f2f;
+            font-weight: bold;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Agricultural Labour Cost Estimator</h1>
+
+    <form method="POST" action="/estimate">
+        <div>
+            <label for="crop_name">Crop Name</label>
+            <select name="crop_name" id="crop_name" required>
+                {% for crop in crops %}
+                <option value="{{ crop }}" {% if selected_crop == crop %}selected{% endif %}>{{ crop }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="area">Farm Area (hectares)</label>
+            <select name="area" id="area" required>
+                {% for area in areas %}
+                <option value="{{ area }}" {% if selected_area == area|string %}selected{% endif %}>{{ area }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="season">Season</label>
+            <select name="season" id="season" required>
+                {% for season in seasons %}
+                <option value="{{ season }}" {% if selected_season == season %}selected{% endif %}>{{ season }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <label for="wage_type">Wage Type</label>
+            <select name="wage_type" id="wage_type" required>
+                {% for wage in wage_types %}
+                <option value="{{ wage }}" {% if selected_wage == wage %}selected{% endif %}>{{ wage }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit">Calculate</button>
+    </form>
+
+    {% if result %}
+        <div class="result">
+            {% if result.error %}
+                <p class="error">Error: {{ result.error }}</p>
+            {% else %}
+                <h2>Estimation Results</h2>
+                <p><strong>Crop:</strong> {{ result.crop }}</p>
+                <p><strong>Area:</strong> {{ result.area }} hectares</p>
+                <p><strong>Season:</strong> {{ result.season }}</p>
+                <p><strong>Wage Type:</strong> {{ result.wage_type }}</p>
+                <p><strong>Total Labor Required:</strong> {{ result.labor_demand }} person-days</p>
+                <p><strong>Cost per Hectare:</strong> ₹{{ result.cost_per_ha }}</p>
+                <p><strong>Total Cost:</strong> ₹{{ result.total_cost }}</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</body>
+</html>

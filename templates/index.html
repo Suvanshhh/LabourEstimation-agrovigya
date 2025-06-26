@@ -27,12 +27,20 @@
         }
 
         h1 {
-            margin: 48px 0 32px 0;
-            color: var(--accent);
+            margin: 48px 0 12px 0;
+            color: var(--input-bg);
             font-size: 2.5rem;
             font-weight: 700;
             letter-spacing: 1px;
             text-align: center;
+        }
+        p{
+            color: var(--text-light);
+            font-size: 1.1rem;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 24px;
+            line-height: 1.6;
         }
 
         form {
@@ -75,10 +83,10 @@
             outline: none;
         }
 
-        button {
+        button[type="submit"] {
             width: 100%;
             padding: 14px 0;
-            background: var(--accent);
+            background: #147b2c;
             color: var(--text-light);
             border: none;
             border-radius: 8px;
@@ -89,7 +97,7 @@
             margin-top: 10px;
             letter-spacing: 1px;
         }
-        button:hover {
+        button[type="submit"]:hover {
             background: var(--accent-dark);
             transform: translateY(-2px) scale(1.01);
         }
@@ -121,6 +129,109 @@
             margin-bottom: 8px;
         }
 
+        /* Floating Help Button */
+        #helpBtn {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 1100;
+            background: #388e3c;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 0.6em 1.1em;
+            font-size: 1.05em;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            min-width: 0;
+            width: auto;
+            transition: background 0.2s, transform 0.1s;
+        }
+        #helpBtn:hover {
+            background: #219150;
+            transform: scale(1.04);
+        }
+        #helpBtn img {
+            width: 28px;
+            height: 28px;
+            margin-right: 3px;
+            animation: swing 1.2s infinite alternate;
+        }
+        @keyframes swing {
+            0% { transform: rotate(-8deg);}
+            100% { transform: rotate(8deg);}
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 1200;
+            left: 0; top: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.35);
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: #fff;
+            border-radius: 10px;
+            max-width: 370px;
+            width: 93vw;
+            margin: auto;
+            padding: 1.1rem 1rem 0.9rem 1rem;
+            position: relative;
+            font-size: 1rem;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.12);
+            animation: fadeIn 0.18s;
+        }
+        .close-modal {
+            position: absolute;
+            top: 8px; right: 12px;
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            color: #388e3c;
+            cursor: pointer;
+        }
+        .modal-content h2 {
+            margin-top:0;
+            font-size:1.12rem;
+            color:#388e3c;
+            text-align:center;
+        }
+        .modal-content ol, .modal-content ul {
+            margin: 1em 0 0.5em 1.1em;
+            padding: 0;
+            font-size: 0.97rem;
+            color: #222;
+        }
+        .modal-content li {
+            margin-bottom: 0.5em;
+            line-height: 1.5;
+        }
+        .modal-content strong {
+            color: #2e7d32;
+        }
+        .modal-content a {
+            color: #1976d2;
+            text-decoration: underline;
+            transition: color 0.2s;
+        }
+        .modal-content a:hover {
+            color: #0d47a1;
+        }
+        .modal-content p {
+            font-size:0.95em;
+            color:#444;
+            text-align:center;
+        }
+
         @media (max-width: 600px) {
             h1 {
                 font-size: 1.3rem;
@@ -129,6 +240,12 @@
             form, .result {
                 max-width: 97vw;
                 padding: 18px 5vw;
+            }
+            .modal-content {
+                padding: 0.7rem 0.3rem !important;
+                max-width: 97vw !important;
+                font-size: 0.97rem !important;
+                border-radius: 7px !important;
             }
         }
 
@@ -140,6 +257,7 @@
 </head>
 <body>
     <h1>Agricultural Labour Cost Estimator</h1>
+    <p>Get the best Labour Cost Estimation based on your need.</p>
 
     <form method="POST" action="/estimate">
         <div class="form-group">
@@ -197,5 +315,62 @@
             {% endif %}
         </div>
     {% endif %}
+
+    <!-- Floating Help Button -->
+    <button id="helpBtn" type="button" aria-label="Need Help?">
+        <img src="{{ url_for('static', filename='confused-character.gif') }}" alt="Confused?">
+        <span style="white-space:nowrap;">Need Help? or Confused?</span>
+    </button>
+
+    <!-- Guide Modal -->
+    <div id="guideModal" class="modal-overlay" tabindex="-1" aria-modal="true" role="dialog">
+      <div class="modal-content">
+        <button id="closeGuide" aria-label="Close Guide" class="close-modal">&times;</button>
+        <h2>How to Use the Labour Cost Estimator</h2>
+        <ol>
+          <li><strong>Crop Name:</strong> Select the crop you want to grow.</li>
+          <li><strong>Farm Area (hectares):</strong> Enter your farm’s area. 1 hectare = 10,000 sq. meters.</li>
+          <li><strong>Season:</strong> Choose the season for your crop (Spring, Summer, Fall, Winter).</li>
+          <li><strong>Wage Type:</strong> Select "Govt" for government-set wages or "Expected" for local market rates.</li>
+        </ol>
+        <ul>
+          <li>Check your land documents or ask your local officer if unsure about area.</li>
+          <li>Labour cost changes with season and wage type.</li>
+          <li>For more help, see:
+            <a href="https://www.farmstandapp.com/3171/farm-labor-cost-estimator/" target="_blank" rel="noopener">Farmstand: Labour Cost Guide</a>
+          </li>
+        </ul>
+        <p>This tool helps you estimate total labour cost for your farm easily!</p>
+      </div>
+    </div>
+
+    <script>
+      const helpBtn = document.getElementById('helpBtn');
+      const guideModal = document.getElementById('guideModal');
+      const closeGuide = document.getElementById('closeGuide');
+
+      helpBtn.onclick = () => {
+          guideModal.classList.add('active');
+          guideModal.focus();
+      };
+      closeGuide.onclick = () => {
+          guideModal.classList.remove('active');
+          helpBtn.focus();
+      };
+      // Close when clicking outside modal content
+      guideModal.onclick = (e) => {
+          if (e.target === guideModal) {
+              guideModal.classList.remove('active');
+              helpBtn.focus();
+          }
+      };
+      // ESC key closes modal
+      document.addEventListener('keydown', function(e) {
+          if (e.key === "Escape" && guideModal.classList.contains('active')) {
+              guideModal.classList.remove('active');
+              helpBtn.focus();
+          }
+      });
+    </script>
 </body>
 </html>

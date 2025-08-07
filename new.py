@@ -39,7 +39,7 @@ def get_cost_column(area, wage_type):
         return f"Estimated_Cost_{wage_type}_Rate_-_Above_5_haIn_Rs"
 
 
-@app.route('/api/labour-estimate', methods=['POST', 'OPTIONS'])
+@app.route('/api/labour-estimate', methods=['GET', 'OPTIONS'])
 @cross_origin()
 def api_labour_estimate():
     if df is None:

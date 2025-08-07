@@ -5,7 +5,7 @@ import os
 
 app = Flask(__name__)
 
-# Enable CORS globally (optional configuration)
+# Enable CORS globally
 CORS(app)
 
 def load_data():
@@ -23,9 +23,8 @@ def load_data():
 try:
     df = load_data()
 except Exception as e:
-    # Log the error and exit or handle as needed
     print(f"Error loading CSV data: {e}")
-    df = None  # Or alternatively, exit app
+    df = None  # Optionally exit app here if critical
 
 def get_cost_column(area, wage_type):
     area = float(area)
@@ -46,8 +45,13 @@ def api_labour_estimate():
         return jsonify({"error": "Server data not loaded."}), 500
 
     if request.method == 'OPTIONS':
-        # CORS preflight request response handled by flask-cors; no need for extra code.
-        return '', 204
+        # Explicit handling of OPTIONS preflight request
+        response = app.make_response('')
+        response.status_code = 204
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'POST, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Content-Type'
+        return response
 
     data = request.get_json()
     if not data:
@@ -70,6 +74,7 @@ def api_labour_estimate():
     cost_col = get_cost_column(area, wage_type_col)
     if cost_col not in row.columns:
         return jsonify({"error": "Cost column not found for this area/wage type."}), 400
+
     cost_per_hectare = float(row.iloc[0][cost_col])
 
     if area in [1, 2, 3, 4, 5]:

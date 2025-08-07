@@ -2,31 +2,58 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import pandas as pd
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
 CORS(app)
 
 def load_data():
     csv_path = os.environ.get('LABOUR_CSV_PATH', 'labour.csv')
+    logging.info(f"Loading CSV from path: {csv_path}")
+    if not os.path.exists(csv_path):
+        logging.error(f"CSV file not found at {csv_path}")
+        raise FileNotFoundError(f"CSV file not found at {csv_path}")
     df = pd.read_csv(csv_path, skipinitialspace=True)
     df.columns = [c.strip().replace('\n', '').replace(' ', '_').replace('.', '').replace('(', '').replace(')', '') for c in df.columns]
+    logging.info("CSV loaded successfully with columns: " + ", ".join(df.columns))
     return df
 
-df = load_data()
+try:
+    df = load_data()
+except Exception as e:
+    logging.error(f"Failed to load data: {e}")
+    df = None  # Or consider exiting app if CSV is mandatory
 
 def get_cost_column(area, wage_type):
-    if float(area) <= 1:
+    area = float(area)
+    if area <= 1:
         return f"Estimated_Cost_{wage_type}_Rate_-_1_haIn_Rs"
-    elif 2 <= float(area) <= 3:
+    elif 2 <= area <= 3:
         return f"Estimated_Cost_{wage_type}_Rate_-_2-3_haIn_Rs"
-    elif 4 <= float(area) <= 5:
+    elif 4 <= area <= 5:
         return f"Estimated_Cost_{wage_type}_Rate_-_4-5_haIn_Rs"
     else:
         return f"Estimated_Cost_{wage_type}_Rate_-_Above_5_haIn_Rs"
 
+@app.route('/')
+def root():
+    return "Root path reachable!"
+
+@app.route('/health')
+def health():
+    return "Health check OK"
+
 @app.route('/api/labour-estimate', methods=['POST'])
 def api_labour_estimate():
+    if df is None:
+        return jsonify({"error": "Data not loaded on server."}), 500
+
     data = request.get_json()
+    if not data:
+        return jsonify({"error": "No JSON payload provided"}), 400
+
     try:
         crop_name = data['crop_name']
         area = float(data['area'])

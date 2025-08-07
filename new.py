@@ -1,30 +1,31 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import pandas as pd
 import os
-import logging
-
-logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__)
+
+# Enable CORS globally (optional configuration)
 CORS(app)
 
 def load_data():
     csv_path = os.environ.get('LABOUR_CSV_PATH', 'labour.csv')
-    logging.info(f"Loading CSV from path: {csv_path}")
     if not os.path.exists(csv_path):
-        logging.error(f"CSV file not found at {csv_path}")
-        raise FileNotFoundError(f"CSV file not found at {csv_path}")
+        raise FileNotFoundError(f"CSV file not found at path: {csv_path}")
+
     df = pd.read_csv(csv_path, skipinitialspace=True)
-    df.columns = [c.strip().replace('\n', '').replace(' ', '_').replace('.', '').replace('(', '').replace(')', '') for c in df.columns]
-    logging.info("CSV loaded successfully with columns: " + ", ".join(df.columns))
+    df.columns = [
+        c.strip().replace('\n', '').replace(' ', '_').replace('.', '').replace('(', '').replace(')', '')
+        for c in df.columns
+    ]
     return df
 
 try:
     df = load_data()
 except Exception as e:
-    logging.error(f"Failed to load data: {e}")
-    df = None  # Or consider exiting app if CSV is mandatory
+    # Log the error and exit or handle as needed
+    print(f"Error loading CSV data: {e}")
+    df = None  # Or alternatively, exit app
 
 def get_cost_column(area, wage_type):
     area = float(area)
@@ -37,22 +38,20 @@ def get_cost_column(area, wage_type):
     else:
         return f"Estimated_Cost_{wage_type}_Rate_-_Above_5_haIn_Rs"
 
-@app.route('/')
-def root():
-    return "Root path reachable!"
 
-@app.route('/health')
-def health():
-    return "Health check OK"
-
-@app.route('/api/labour-estimate', methods=['POST'])
+@app.route('/api/labour-estimate', methods=['POST', 'OPTIONS'])
+@cross_origin()
 def api_labour_estimate():
     if df is None:
-        return jsonify({"error": "Data not loaded on server."}), 500
+        return jsonify({"error": "Server data not loaded."}), 500
+
+    if request.method == 'OPTIONS':
+        # CORS preflight request response handled by flask-cors; no need for extra code.
+        return '', 204
 
     data = request.get_json()
     if not data:
-        return jsonify({"error": "No JSON payload provided"}), 400
+        return jsonify({"error": "No JSON payload provided."}), 400
 
     try:
         crop_name = data['crop_name']
@@ -89,6 +88,7 @@ def api_labour_estimate():
         "cost_per_hectare": cost_per_hectare,
         "total_cost": round(total_cost, 2)
     })
+
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
